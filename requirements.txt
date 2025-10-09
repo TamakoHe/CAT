@@ -1,0 +1,8 @@
+matplotlib==3.10.6
+mindcv==0.3.0
+noise==1.2.2
+numpy==2.3.3
+opencv_python
+Pillow==11.3.0
+timm==1.0.20
+tqdm==4.67.1

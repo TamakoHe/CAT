@@ -1,0 +1,17 @@
+DA_low_limit=0.7
+DA_up_limit=1.0
+layers_to_extract_from= ["layer1", "layer2", "layer3"]
+feature_compression=false 
+scale_factors=[4.0, 2.0, 1.0]
+FPN_output_dim=[256, 512, 1024]
+patch_size=[16,16]
+embed_dim=64
+depth=12
+num_heads=8
+mlp_ratio=4
+window_size=4
+qkv_bias=true
+drop_path_rate=0.1
+input_resolution=16
+pretrain_image_size=[224,224]
+backbone="resnet50"

@@ -1,0 +1,28 @@
+{
+    "binFileName":"te_applyadamd_60cd5b66c6734357181f8e7397d490530c8368a9407ee68c3506849db8bc68b5",
+    "binFileSuffix":".o",
+    "blockDim":48,
+    "coreType":"VectorCore",
+    "deterministic":"ignore",
+    "intercoreSync":0,
+    "kernelName":"te_applyadamd_60cd5b66c6734357181f8e7397d490530c8368a9407ee68c3506849db8bc68b5__kernel0",
+    "magic":"RT_DEV_BINARY_MAGIC_ELF_AIVEC",
+    "memoryStamping":[],
+    "opParaSize":0,
+    "parameters":[
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+    ],
+    "sha256":"2246cdc201cea63e978f74229eeb508e3d3db1c214db6c58c5e07a2ae33256be"
+}
