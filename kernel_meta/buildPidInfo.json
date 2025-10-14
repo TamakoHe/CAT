@@ -52,6 +52,10 @@
         "/root/autodl-tmp/cat-mindspore/kernel_meta/kernel_meta_6022050857642964666"
     ],
     [
+        43621,
+        "/root/autodl-tmp/CAT/kernel_meta/kernel_meta_6519393687187637850"
+    ],
+    [
         49679,
         "/root/autodl-tmp/cat-mindspore/kernel_meta/kernel_meta_2337376582614744633"
     ],
@@ -112,8 +116,16 @@
         "/root/autodl-tmp/cat-mindspore/kernel_meta/kernel_meta_5527822143778045856"
     ],
     [
+        157302,
+        "/root/autodl-tmp/CAT/kernel_meta/kernel_meta_10741826231057789789"
+    ],
+    [
         235739,
         "/root/autodl-tmp/cat-mindspore/kernel_meta/kernel_meta_8667962802924519121"
+    ],
+    [
+        269090,
+        "/root/autodl-tmp/CAT/kernel_meta/kernel_meta_157092983430891540"
     ],
     [
         330097,
@@ -122,5 +134,13 @@
     [
         358444,
         "/root/autodl-tmp/cat-mindspore/kernel_meta/kernel_meta_5880647117473602294"
+    ],
+    [
+        395990,
+        "/root/autodl-tmp/CAT/kernel_meta/kernel_meta_3294688575724814851"
+    ],
+    [
+        511215,
+        "/root/autodl-tmp/CAT/kernel_meta/kernel_meta_11587772091202311242"
     ]
 ]

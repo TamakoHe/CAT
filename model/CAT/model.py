@@ -1,4 +1,8 @@
+"""
+该文件是CAT模型的主要定义
+"""
 import math
+from sklearn.metrics import  average_precision_score
 
 from tqdm import tqdm
 from mindspore.ops import operations as P
@@ -18,8 +22,11 @@ from mindspore import Tensor
 from mindspore.common.initializer import initializer, Normal, Zero, One
 from backbones import load_backbone_mindspore, load_backbone_pytorch
 import timm.optim.optim_factory as optim_factory
+from cat_utils import *
+from scipy.ndimage import gaussian_filter
+from sklearn.metrics import roc_auc_score
 ms.set_context(mode=ms.PYNATIVE_MODE)
-class SwinBlock(nn.Cell):
+class SwinBlock(nn.Cell): # Swin-transformer 定义
     def __init__(
         self,
         embed_dim: int = 768,
@@ -65,7 +72,7 @@ class SwinBlock(nn.Cell):
         return ops.cat([cls_token, patch_tokens], axis=1)  # [B,257,C]
 
 
-class FPN(nn.Cell):
+class FPN(nn.Cell): # FPN层
     def __init__(self, scale_factors, decoder_embed_dim, fpn_output_dims, patch_size=None):
         super().__init__()
         assert len(fpn_output_dims) == len(scale_factors)
@@ -153,8 +160,7 @@ class FPN(nn.Cell):
         return output_features
 
 
-class Conv2d(nn.Cell):
-    """MindSpore版本的Conv2d包装器，支持norm和activation"""
+class Conv2d(nn.Cell):# minspore版本的卷积层
     def __init__(self, in_channels, out_channels, kernel_size, stride=1, 
                  padding=0, dilation=1, group=1, bias=True, norm=None, activation=None):
         super().__init__()
@@ -173,8 +179,7 @@ class Conv2d(nn.Cell):
         return x
 
 
-class ConvLayerNorm(nn.Cell):
-    """MindSpore版本的LayerNorm，针对Conv2d输出"""
+class ConvLayerNorm(nn.Cell): # MindSpore版本的LayerNorm, 针对Conv2d输出
     def __init__(self, normalized_shape, eps=1e-6):
         super().__init__()
         self.normalized_shape = (normalized_shape,)
@@ -191,8 +196,7 @@ class ConvLayerNorm(nn.Cell):
         return x
 
 
-class PatchEmbed(nn.Cell):
-    """简化的PatchEmbed实现"""
+class PatchEmbed(nn.Cell): # 简化的PatchEmbed实现
     def __init__(self, img_size=(224,224), patch_size=(16,16), in_channels=3, embed_dim=768):
         super().__init__()
         self.img_size = img_size
@@ -213,8 +217,7 @@ class PatchEmbed(nn.Cell):
         return x
 
 
-class TransformerBlock(nn.Cell):
-    """简化的Transformer Block实现"""
+class TransformerBlock(nn.Cell): # TransformerBlock
     def __init__(self, embed_dim, num_heads, mlp_ratio=4., qkv_bias=True, norm_layer=nn.LayerNorm):
         super().__init__()
         self.norm1 = norm_layer((embed_dim,))
@@ -279,8 +282,7 @@ def get_1d_sincos_pos_embed_from_grid(embed_dim, pos):
     return emb
 
 
-class CATModel_mindspore(nn.Cell):
-    """MindSpore版本的CAT模型（无mask版本）"""
+class CATModel_mindspore(nn.Cell): # MindSpore版本的CAT模型
     def __init__(self, cfg, norm_layer=nn.LayerNorm):
         super().__init__()
         embed_dim = cfg.model_config.embed_dim
@@ -319,7 +321,6 @@ class CATModel_mindspore(nn.Cell):
         
         # Decoder
         decoder_embed_dim = embed_dim
-        # 删除mask token相关代码
         self.decoder_fpn_pos_embed = ms.Parameter(ops.zeros((1, num_patches + 1, decoder_embed_dim)),
                                                 requires_grad=False)
         
@@ -339,7 +340,6 @@ class CATModel_mindspore(nn.Cell):
                                                   int(self.patch_embed.num_patches ** .5), cls_token=True)
         self.decoder_fpn_pos_embed.set_data(Tensor(decoder_pos_embed, ms.float32).unsqueeze(0))
 
-        # 初始化cls_token（删除mask token初始化）
         self.cls_token.set_data(initializer(Normal(sigma=0.02), self.cls_token.shape, self.cls_token.dtype))
 
     def generate_region(self, center_x, center_y, radius, scale, amplitude, num_points):
@@ -350,8 +350,7 @@ class CATModel_mindspore(nn.Cell):
         y = center_y + r * np.sin(thetas)
         return x, y
 
-    def custom_augment_preimage(self, img, probability=1):
-        """自定义数据增强"""
+    def custom_augment_preimage(self, img, probability=1):# 水滴增强算法
         img_np = img.asnumpy()
         if random.random() >= probability:
             return img_np
@@ -381,14 +380,12 @@ class CATModel_mindspore(nn.Cell):
             
         return np.transpose(img_np, (1, 2, 0))
 
-    def custom_augment(self, images):
-        """批量数据增强"""
+    def custom_augment(self, images):# 批量数据增强
         processed_images = [self.custom_augment_preimage(img.transpose(2, 0, 1)) for img in images] 
         processed_images = np.array(processed_images)
         return Tensor(processed_images, ms.float32)
 
     def forward_encoder(self, x):
-        """编码器前向传播（无mask版本）"""
         x = self.custom_augment(x)
         x = self.patch_embed(x)
         
@@ -420,7 +417,6 @@ class CATModel_mindspore(nn.Cell):
         return x
 
     def forward_decoder_fpn(self, x):
-        """FPN解码器前向传播（无mask版本）"""
         # 直接使用所有patch tokens（跳过cls token）
         x_patches = x[:, 1:, :]  # [B, N, C]
         
@@ -444,7 +440,6 @@ class CATModel_mindspore(nn.Cell):
         return output
 
     def construct(self, images):
-        """前向传播（无mask版本）"""
         if images.shape[1]<=3:
             images=ops.transpose(images, (0, 2, 3, 1))
         # print(f"Debug: {images.shape}")
@@ -454,12 +449,10 @@ class CATModel_mindspore(nn.Cell):
 
 
 def cat_base(cfg):
-    """基础CAT模型（无mask版本）"""
     model = CATModel_mindspore(cfg=cfg)
     return model
 # 与模型名称同名的class是模型本体 　要求实现construct train _eval test 函数 手动调用load_config 初始化
 def load_optimizer_mindspore(cfg, model):
-    """简化的MindSpore优化器配置"""
     if cfg.optimizer == "adam":
         # 直接使用所有可训练参数
         optimizer = nn.Adam(
@@ -482,8 +475,7 @@ def load_optimizer_mindspore(cfg, model):
         return optimizer
     else:
         raise NotImplementedError(f"{cfg.optimizer} has not been supported yet!")
-def cat_adjust_learning_rate(optimizer, epoch, cfg):
-    """MindSpore版本的学习率调整"""
+def cat_adjust_learning_rate(optimizer, epoch, cfg):# MindSpore版本的学习率调整
     if epoch < cfg.train_warmup_epoch:
         lr = cfg.train_lr * epoch / cfg.train_warmup_epoch
     else:
@@ -523,8 +515,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 import types
 
-# 确保在PyNative模式下运行
-# ms.set_context(mode=ms.PYNATIVE_MODE)
+
 
 class MindSporeResNetHookManager:
     def __init__(self, model, layers_to_extract):
@@ -588,7 +579,6 @@ class CAT_mindspore(nn.Cell):
         self.hook_handles = []
 
     def load_config(self,cfg):
-        # TODO RNG SEED ALL
         self.cfg=cfg
         self.device=cfg.device
         self.cat_base=CATModel_mindspore(cfg)
@@ -597,7 +587,6 @@ class CAT_mindspore(nn.Cell):
         self._register_forward_hooks()
         if cfg.train_load_pretrained_model:
             ckpt=ms.load_checkpoint(cfg.train_pretrain_model_path)
-            # TODO: no scratch MAE decoder
             ms.load_param_into_net(self.cat_base, ckpt)
             print(f"Load pre-trained:{cfg.train_pretrain_model_path}")
         self.optimizer=load_optimizer_mindspore(cfg, self.cat_base)
@@ -618,9 +607,8 @@ class CAT_mindspore(nn.Cell):
         # 为指定层注册钩子
     
     def train(self, train_dataloader):
-        if not self.cfg.enable_train:
-            return
-        temp_lr = self.cfg.train_lr
+        ms.set_context(device_target=self.cfg.device)
+
         
         # 1. 定义梯度计算函数
         grad_fn = ms.value_and_grad(self._forward_fn, None, self.optimizer.parameters)
@@ -637,6 +625,8 @@ class CAT_mindspore(nn.Cell):
             for batch_idx, image in enumerate(tqdm(train_dataloader)):
                 if isinstance(image, dict):
                     image_tensor = image["image"]
+                elif isinstance(image, list):
+                    image_tensor=image[0]
                 else:
                     image_tensor = image
                     
@@ -644,7 +634,7 @@ class CAT_mindspore(nn.Cell):
                     image_tensor = Tensor(image_tensor, ms.float32)
                     
                 if len(image_tensor.shape) == 5:
-                    image_tensor = ops.squeeze(image_tensor, axis=0)
+                    image_tensor = ops.squeeze(image_tensor, axis=1)
                     
                 # 清空上一轮的特征
                 self.hook_manager.clear_feature_maps()
@@ -678,31 +668,101 @@ class CAT_mindspore(nn.Cell):
             if loss_list:
                 avg_loss = np.mean(loss_list)
                 print(f'Epoch [{cur_epoch + 1}/{self.cfg.train_epochs}], loss: {avg_loss:.4f}')
-                # print(f"Debug:{avg_loss}")
-        # TODO: 仅调试
-        if cfg.train_save_ckpt:
-            ms.save_checkpoint(self.cat_base, "model_debug.ckpt")       
-        # 恢复原始学习率
-        # self.cfg.trian_lr = temp_lr
-
+    
+        return self.cat_base   
+    def _save_model(self):
+        pass
 # 2. 添加前向计算函数
     def _forward_fn(self, image_tensor, multi_scale_features):
-        """前向计算函数，用于梯度计算"""
         # CAT模型前向传播
         reverse_features = self.cat_base(image_tensor)
         multi_scale_reverse_features = [
             reverse_features[key] 
             for key in self.cfg.model_config.layers_to_extract_from
         ]
-        # print(f"Debug2 :{multi_scale_features} \n {multi_scale_reverse_features}")
         loss = each_patch_loss_function(multi_scale_features, multi_scale_reverse_features)
-        # print(f"Debug 3 :{len(multi_scale_features)} {len(multi_scale_reverse_features)}")
         return loss
-        # train_dataloader=
     def _eval(self):
         pass 
-    def test(self):
-        pass
+    def test(self, test_dataloader):
+        ms.set_context(device_target='CPU')
+        self.backbone.set_train(False)
+        self.cat_base.set_train(False)
+        # Image-level
+        labels_gt=[]
+        labels_prediction=[]
+        # Pixel-level
+        masks_gt=[]
+        masks_prediction=[]
+        aupro_list=[]
+        # Image-info
+        img_path=[]
+        img_name_list=[]
+        for batch_idx, image in enumerate(tqdm(test_dataloader)):
+            if isinstance(image, list):
+                label_current = image[4].numpy()         # (batch_size,)
+                mask_current = image[1].squeeze(1).numpy()     # (batch_size, H, W)
+                labels_gt.extend(label_current.tolist())            # 扩展真实标签
+                masks_gt.extend(mask_current)                       # 直接扩展 numpy 数组
+                img_path.extend(image[2])
+                img_name_list.extend(image[5])
+                image_tensor=image[0]
+                
+                self.hook_manager.clear_feature_maps()
+                if len(image_tensor.shape)==5:
+                    image_tensor=ops.squeeze(image_tensor, axis=1)
+                # print(f"Debug: {image_tensor.shape}")
+                # 教师网络前向传播
+                _ = self.backbone(image_tensor)
+                feature_maps = self.hook_manager.get_feature_maps()
+
+                # 获取通过hook捕获的特征
+                multi_scale_features = [
+                    feature_maps[key] 
+                    for key in self.cfg.model_config.layers_to_extract_from
+                    if key in feature_maps
+                ]
+                if len(multi_scale_features) != len(self.cfg.model_config.layers_to_extract_from):
+                    missing_layers = set(self.cfg.model_config.layers_to_extract_from) - set(feature_maps.keys())
+                    print(f"Warning: Missing layers: {missing_layers}")
+                    continue
+                reverse_features = self.cat_base(image_tensor)
+                multi_scale_reverse_features = [
+                    reverse_features[key] 
+                    for key in self.cfg.model_config.layers_to_extract_from
+                ]
+                anomaly_map,_ =cal_anomaly_map(multi_scale_features, multi_scale_reverse_features, 
+                                               image_tensor.shape[-1], amap_mode='a')
+                anomaly_map=anomaly_map.numpy()
+                for item in range(len(anomaly_map)):
+                    anomaly_map[item] = gaussian_filter(anomaly_map[item], sigma=4)                
+                labels_prediction.extend(np.max(anomaly_map.reshape(anomaly_map.shape[0], -1), 
+                                            axis=1).tolist())
+                masks_prediction.extend(anomaly_map)
+                if set(mask_current.astype(int).flatten()) == {0, 1}:
+                    aupro_list.extend(compute_pro(anomaly_map, mask_current.astype(int), label_current))
+            else:
+                raise Exception("Invalid test data format!")
+             
+        auroc_samples = round(roc_auc_score(labels_gt, labels_prediction), 3)
+        print(f"Debug RE: {len(masks_gt)} {masks_gt[0].shape} {len(masks_prediction)} {masks_prediction[0].shape}")
+        pixel_scores = compute_pixelwise_retrieval_metrics(masks_prediction, masks_gt)
+        auroc_pixel = pixel_scores["auroc"]
+        mean_aupro = round(np.mean(aupro_list), 3)
+
+        AP_det = average_precision_score(labels_gt, labels_prediction)
+        masks_gt_flat = np.concatenate([mask.flatten() for mask in masks_gt]).astype(np.int32)          # 展平并拼接
+        masks_pred_flat = np.concatenate([pred.flatten() for pred in masks_prediction]) # 展平并拼接
+        AP_loc = average_precision_score(masks_gt_flat, masks_pred_flat)
+
+        # print(f"Debug :I_AUROC:{auroc_samples} P_AUROC:{auroc_pixel} PRO:{mean_aupro} AP_det:{AP_det} AP_loc:{AP_loc}")
+        return {
+            "I_AUROC":auroc_samples,
+            "P_AUROC":auroc_pixel,
+            "PRO":mean_aupro,
+            "AP_det":AP_det,
+            "AP_loc":AP_loc
+        }
     def construct(self,images):
         pass
-    
+

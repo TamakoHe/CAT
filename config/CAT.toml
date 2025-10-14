@@ -1,3 +1,4 @@
+# 改配置文件是CAT模型的特定配置文件 会被自动加载
 DA_low_limit=0.7
 DA_up_limit=1.0
 layers_to_extract_from= ["layer1", "layer2", "layer3"]

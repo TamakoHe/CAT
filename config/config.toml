@@ -1,19 +1,20 @@
+# 该配置文件是一个总体配置文件
 [GLOBAL]
 RNG_SEED=42
 OUTPUT_DIR="./runs"
 save_model=true
-device.mindspore="npu"
+device.mindspore="Ascend"
 device.pytorch="cuda"
 [DATASET]
 name="KolektorSDD2"
 shape.datset=[256,256]
 shape.model_input=[256,256]
 in_channels=3
-path.train="/root/autodl-tmp/cat-mindspore/data/KolektorSDD2"
-path.eval="/root/autodl-tmp/cat-mindspore/data/KolektorSDD2"
-path.test="/root/autodl-tmp/cat-mindspore/data/KolektorSDD2"
+path.train="/root/autodl-tmp/CAT/data/KolektorSDD2"
+path.eval="/root/autodl-tmp/CAT/data/KolektorSDD2"
+path.test="/root/autodl-tmp/CAT/data/KolektorSDD2"
 [TRAIN]
-enable=true
+enable=false
 checkpoint.enable_save=true
 checkpoint.save_best=true # 除了save_freq之外 是否单独保存最好  要求EVAL.enable=true
 checkpoint.save_freq=-1 #  多少个epoch保存checkpoint -1意味着只在save_best=true的时候保存最后结果
@@ -23,8 +24,8 @@ setup.learning_rate=0.0005
 setup.epochs=200
 setup.weight_decay=0.05
 setup.warmup_epochs=20
-setup.load_pretrain_model=false
-setup.pretrain_model_path=""
+setup.load_pretrain_model=true
+setup.pretrain_model_path="/root/autodl-tmp/CAT/runs/run1/weight/last.mindpt.ckpt"
 setup.optimizer.name="adam"
 setup.optimizer.beta1=0.9
 setup.optimizer.beta2=0.95
@@ -42,4 +43,4 @@ visualize.mode="all" # 要么填入all或者一个0到1之间的浮点数表示�
 name="CAT"
 framework="mindspore" 
 config.class_name="CAT_config"
-config.path="/root/autodl-tmp/cat-mindspore/config/CAT.toml"
+config.path="/root/autodl-tmp/CAT/config/CAT.toml"

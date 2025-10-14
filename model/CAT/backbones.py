@@ -1,5 +1,8 @@
 # safe_cell_del.py — 在程序最先被 import
 import mindspore.nn.cell as _ms_cell
+"""
+这个文件是为了加载预训练的主干网络
+"""
 
 _orig_cell_del = getattr(_ms_cell.Cell, "__del__", None)
 
@@ -8,17 +11,13 @@ def _safe_cell_del(self):
         if _orig_cell_del:
             _orig_cell_del(self)
     except Exception:
-        # 忽略析构时的异常（避免 "NoneType has no attribute 'total_instance_count'"）
-        # 可在这里记录日志：print("Ignored Cell.__del__ exception")
         return
 
-# 覆盖原 __del__
 _ms_cell.Cell.__del__ = _safe_cell_del
 
 from mindcv.models.model_factory import create_model
 from mindcv.models import registry
 
-# 你原来的 PyTorch/timm 对应名 → MindCV 支持的 model_name 映射（你可以扩充这个表）
 _MINDCV_MAPPING = {
     "resnet50": "resnet50",
     "resnet18": "resnet18",
@@ -28,8 +27,7 @@ _MINDCV_MAPPING = {
     "efficientnet_b3": "efficientnet_b3",  # MindCV 支持 “efficientnet” 族模型 :contentReference[oaicite:2]{index=2}
     "vgg19": "vgg19",
     "vgg19_bn": "vgg19",  # MindCV 的 vgg 接口里默认无 batchnorm 或带 batchnorm 版本可选 :contentReference[oaicite:3]{index=3}
-    # … 你可以继续为你的 _BACKBONES 列表做映射
-}
+}# 可用的模型
 
 def load_ms_via_mindcv(name: str, pretrained: bool = True, num_classes: int = 1000, in_channels: int = 3, checkpoint_path: str = ""):
     """
@@ -55,27 +53,7 @@ def load_ms_via_mindcv(name: str, pretrained: bool = True, num_classes: int = 10
     return model
 
 
-def load_backbone_mindspore(cfg):
-    return load_ms_via_mindcv(cfg.model_config.backbone, True, 5, in_channels=cfg.in_channels)
+def load_backbone_mindspore(cfg): # 加载主干网络
+    return load_ms_via_mindcv(cfg.model_config.backbone, True, 5, in_channels=cfg.in_channels) 
 def load_backbone_pytorch():
     pass
-if __name__ == "__main__":
-    # 加载模型
-    m = load_ms_via_mindcv("resnet50")
-
-    # ===== 验证推理部分 =====
-    import mindspore as ms
-    import numpy as np
-
-    # 设置推理模式（防止进入训练图）
-    m.set_train(True)
-
-    # 构造一个随机输入张量，符合模型输入维度 [batch, channel, height, width]
-    dummy_input = ms.Tensor(np.random.randn(1, 3, 224, 224), ms.float32)
-
-    # 前向推理
-    output = m(dummy_input)
-
-    # 输出结果维度与部分数值
-    print("✅ 推理成功！输出 shape:", output.shape)
-    print("前 5 个 logits:", output[0, :5])

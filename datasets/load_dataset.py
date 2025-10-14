@@ -16,17 +16,10 @@ def _get_dataloaders_mindposre(cfg, mode):
 
 def _get_dataloaders_pytorch(cfg, mode):
     pass 
-def get_dataloaders(cfg, mode='train'):
-    if cfg.model_framework=="mindspore":
+def get_dataloaders(cfg, mode='train'): # 加载mindspore版本的数据加载器
+    if cfg.model_framework=="mindspore": 
         return _get_dataloaders_mindposre(cfg, mode)
     elif cfg.model_framework=="pytorch":
         pass 
     else:
         raise NotImplementedError(f"Framwork {cfg.model_framework} has not been supported yet!")
-# if __name__=="__main__":
-#     debug_toml_path="./config/config.toml"
-#     from ..utils import config
-#     debug_cfg=config.Config()
-#     debug_cfg.load_toml(debug_toml_path)
-#     debug_train_ld=get_dataloaders(debug_cfg, "train")
-#     debug_test_ld=get_dataloaders(debug_cfg, "test")

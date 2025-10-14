@@ -2,6 +2,10 @@ import tomllib
 import importlib
 import sys
 import os
+"""
+这个配置器读取器(parser)能映射各种模型通用的配置参数, 并且能够自动通过全局配置文件找到并加载模型具体的配置文件,
+有高度模块化, 易于维护的特点
+"""
 class Config:
     def __init__(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -56,7 +60,7 @@ class Config:
         self.model_config_path=toml_data["MODEL"]["config"]["path"]
         self.model_config_class_name=toml_data["MODEL"]["config"]["class_name"]
         try:
-        # 尝试导入模型配置
+        # 尝试导自动入模型配置
             model_module = importlib.import_module(f"model_config.{self.model_name}.config")
             config_class = getattr(model_module, self.model_config_class_name)
             self.model_config = config_class()
@@ -69,5 +73,4 @@ class Config:
                 print(f"  {path}")
             raise
         self.model_config.load_toml(self.model_config_path)
-        # OTHER
         self.device=toml_data["GLOBAL"]["device"][self.model_framework]

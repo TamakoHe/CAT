@@ -1,4 +1,6 @@
-# dataset_mvtec_flat.py
+"""
+mindspore框架的dataloader 
+"""
 import imp
 import mindspore as ms
 import mindspore.dataset as ds
@@ -11,37 +13,17 @@ from PIL import Image
 import numpy as np
 import os
 
-IMG_EXTS = {'.png', '.jpg', '.jpeg', '.bmp', '.tif', '.tiff'}
+IMG_EXTS = {'.png', '.jpg', '.jpeg', '.bmp', '.tif', '.tiff'} # 支持的图片类型
 
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
-IMAGENET_STD = [0.229, 0.224, 0.225]
+IMAGENET_STD = [0.229, 0.224, 0.225] # Imgae-Net 参数
 
 def _is_image_file(path: Path) -> bool:
     return path.suffix.lower() in IMG_EXTS
 
 
 class CATDataset:
-    """
-    Dataset for flat layout:
-    Dataset/
-        train/           # *.png (train images only)
-        test/            # *.png (test images)
-        ground_truth/    # *.png masks, filenames match test/ filenames exactly
 
-    mode:
-      - "train": returns image tensor (for self-supervised training)
-      - "test" : returns (image tensor, mask tensor)
-
-    Args:
-      root: dataset root dir (str or Path)
-      mode: "train" or "test"
-      transform: callable applied to PIL image -> tensor (default: ToTensor())
-      mask_transform: callable applied to PIL mask -> tensor (default: binary LongTensor 0/1)
-      return_paths: if True, returns dict with paths for debugging/visualization
-      strict: if True, raise FileNotFoundError when a mask for a test image is missing;
-              if False, return zero mask and print a warning (default: True)
-      mask_dtype: mindspore.dtype for returned mask (ms.int32 or ms.float32)
-    """
     def __init__(
         self,
         root: Union[str, Path],
@@ -80,9 +62,9 @@ class CATDataset:
         self.gt_dir = self.root / "ground_truth"
 
         if not self.root.exists():
-            raise FileNotFoundError(f"Dataset root not found: {self.root}")
+            raise FileNotFoundError(f"Dataset root not found: {self.root}") 
 
-        if self.mode == "train":
+        if self.mode == "train": # train mode
             if not self.train_dir.exists():
                 raise FileNotFoundError(f"train/ not found under {self.root}")
             self.images = sorted([p for p in self.train_dir.iterdir() if p.is_file() and _is_image_file(p)])
@@ -111,7 +93,7 @@ class CATDataset:
                         if not warned:
                             print(f"[FlatMVTecLikeDataset] Warning: some masks missing; zero masks will be returned. (First missing: {img.name})")
                             warned = True
-                self.pairs.append((img, mask))
+                self.pairs.append((img, mask)) # test模式要加载ground_truth
 
     def __len__(self):
         return len(self.images) if self.mode == "train" else len(self.pairs)
@@ -123,6 +105,7 @@ class CATDataset:
             
             if self.transform:
                 img_t = self.transform(img)
+                img_t=np.array(img_t)
             else:
                 img_t = np.array(img).astype(np.float32) / 255.0
                 img_t = np.transpose(img_t, (2, 0, 1))  # HWC to CHW
@@ -136,6 +119,7 @@ class CATDataset:
             
             if self.transform:
                 img_t = self.transform(img)
+                img_t=np.array(img_t)
             else:
                 img_t = np.array(img).astype(np.float32) / 255.0
                 img_t = np.transpose(img_t, (2, 0, 1))  # HWC to CHW
@@ -144,6 +128,8 @@ class CATDataset:
             if mask_path is not None and mask_path.exists():
                 mask_pil = Image.open(mask_path).convert('L')
                 mask_t = self.mask_transform(mask_pil)
+                mask_t=np.array(mask_t)
+                mask_t=(np.array(mask_t) > 0).astype(np.uint8)   
                 is_anomaly = int(np.max(mask_t) != 0)
             else:
                 # create zero mask same HxW as image
@@ -155,6 +141,7 @@ class CATDataset:
                     
             if self.return_paths:
                 return img_t, mask_t, str(img_path), (str(mask_path) if mask_path is not None else ""), is_anomaly, "/".join(str(img_path).split("/")[-4:])
+                # return {"image": img_t, "mask": mask_t, "image_path": str(img_path), "mask_path": (str(mask_path) if mask_path is not None else None),"is_anomaly":is_anomaly, "image_name":"/".join(str(img_path).split("/")[-4:])}
             return img_t, mask_t
 
 def _dataloader(cfg, dataset, mode):
@@ -232,4 +219,3 @@ def get_dataloaders(cfg, mode='train'):
     
     else:
         raise NotImplementedError("Unknown mode")
-# TODO: 要加上val 的 loader哦

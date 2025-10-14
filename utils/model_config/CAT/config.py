@@ -1,6 +1,9 @@
 import tomllib
+"""
+这是CAT模型自己的特有配置, 能够被自动加载
+"""
 class CAT_config:
-    def __init__(self) -> None:
+    def __init__(self):
         pass
     def load_toml(self,toml_path):
         with open(toml_path, "rb") as f:

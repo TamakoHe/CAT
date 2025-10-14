@@ -3,10 +3,10 @@ import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore import Tensor
 
+"""
+我们的创新点:多尺度特征余弦相似度损失函数 
+"""
 def each_patch_loss_function(a, b):
-    """
-    修正版的多尺度特征余弦相似度损失函数
-    """
     total_loss = 0
     # print(f"Debug: la:{len(a)} lb:{len(b)}")
     
