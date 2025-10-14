@@ -5,7 +5,6 @@
 [![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)]()  ![MindSpore](https://img.shields.io/badge/MindSpore-2.7.0-blue.svg)
 
-
 ---
 
 # 目录（Table of Contents）
@@ -67,14 +66,16 @@ CAT/
 └── requirements.txt
 
 ```
+
 ---
 
 # 数据集（Dataset）
 
-- kolektorsdd2数据集 
-    使用的是训练子集被筛选, 只剩下正常样本的数据集(自监督学习)
+- kolektorsdd2数据集
+  使用的是训练子集被筛选, 只剩下正常样本的数据集(自监督学习)
 - 自定义数据集
-    按照以下结构
+  按照以下结构
+
 ```
 📂 KolektorSDD2/
 ├── 📁 ground_truth/      # 缺陷的标注 (掩码) 文件名和对应的测试集文件一致
@@ -101,9 +102,9 @@ name="KolektorSDD2"
 shape.datset=[256,256]
 shape.model_input=[256,256]
 in_channels=3
-path.train="/root/autodl-tmp/CAT/data/KolektorSDD2"
-path.eval="/root/autodl-tmp/CAT/data/KolektorSDD2"
-path.test="/root/autodl-tmp/CAT/data/KolektorSDD2"
+path.train="/root/CAT/data/KolektorSDD2"
+path.eval="/root/CAT/data/KolektorSDD2"
+path.test="/root/CAT/data/KolektorSDD2"
 [TRAIN]
 enable=false
 checkpoint.enable_save=true
@@ -116,7 +117,7 @@ setup.epochs=200
 setup.weight_decay=0.05
 setup.warmup_epochs=20
 setup.load_pretrain_model=true
-setup.pretrain_model_path="/root/autodl-tmp/CAT/runs/run1/weight/last.mindpt.ckpt"
+setup.pretrain_model_path="/root/CAT/runs/run1/weight/last.mindpt.ckpt"
 setup.optimizer.name="adam"
 setup.optimizer.beta1=0.9
 setup.optimizer.beta2=0.95
@@ -134,10 +135,12 @@ visualize.mode="all" # 要么填入all或者一个0到1之间的浮点数表示�
 name="CAT"
 framework="mindspore" 
 config.class_name="CAT_config"
-config.path="/root/autodl-tmp/CAT/config/CAT.toml"
+config.path="/root/CAT/config/CAT.toml"
 ```
+
 - 使用 `config/<model_name>.toml` 存储模型特有的配置
-- 示例 `config/CAT.toml` 
+- 示例 `config/CAT.toml`
+
 ```toml
 DA_low_limit=0.7
 DA_up_limit=1.0
@@ -157,8 +160,8 @@ input_resolution=16
 pretrain_image_size=[224,224]
 backbone="resnet50"
 ```
-# 模型与结果（Models & Results）
 
+# 模型与结果（Models & Results）
 
 ```
 Model: resnet50-baseline
@@ -170,9 +173,6 @@ Recall: 0.79
 
 - 表格展示不同实验对比（建议放在 `docs/` 或 `RESULTS.md`）
 
-
 # 许可（License）
 
 本项目采用 GPLv3。详见 `LICENSE` 文件。
-
-
