@@ -3,7 +3,6 @@ logs/
 data/
 kernel_meta/
 .vscode/
-kernel_meta/
 debug/
 offload/
 runs/
