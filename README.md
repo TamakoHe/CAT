@@ -162,14 +162,23 @@ backbone="resnet50"
 ```
 
 # 模型与结果（Models & Results）
+<sub>**Table:** Comparison with Existing Methods on KolektorSDD2 Dataset</sub>
 
-```
-Model: resnet50-baseline
-Dataset: MyDataset v1.0
-mAP@0.5: 0.842
-Precision: 0.83
-Recall: 0.79
-```
+| Method | Image-level AUROC | Pixel-level AUROC | Per-region Overlap | AP_det | AP_loc |
+|:--|:--:|:--:|:--:|:--:|:--:|
+| SuperSimpleNet [[1]](#ssn1) | 87.60% | 99.10% | 94.49% | 0.82 | 0.41 |
+| DRA [[2]](#DRA) | 86.80% | 84.40% | 56.90% | - | - |
+| ReContrast [[3]](#recontrast) | 90.86% | 99.11% | 91.95% | **0.82** | 0.46 |
+| MMR [[4]](#mmr) | 92.29% | 99.45% | 95.50% | 0.74 | 0.36 |
+| RD4AD [[5]](#RD4AD) | 96.00% | 97.60% | 94.70% | 0.44 | - |
+| DREAM [[6]](#DREAM) | 81.10% | 85.60% | 67.90% | 0.39 | - |
+| PatchCore [[7]](#PatchCore) | 94.60% | 97.10% | 89.30% | 0.50 | - |
+| PRN [[8]](#PRN) | 96.40% | 97.60% | 94.90% | 0.73 | - |
+| DFR [[9]](#dfr) | **93.80%** | 99.15% | **96.30%** | 0.76 | 0.37 |
+| ADClick-Seg [[10]](#ADClick) | 91.50% | 99.50% | - | - | - |
+| **Ours** | **93.80%** | **99.54%** | 95.80% | **0.82** | **0.49** |
+
+
 
 - 表格展示不同实验对比（建议放在 `docs/` 或 `RESULTS.md`）
 
