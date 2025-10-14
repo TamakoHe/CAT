@@ -43,8 +43,7 @@ conda create --name cat python=3.11
 conda activate cat
 # 安装依赖
 pip install -r requirements.txt
-# 下载/准备数据（见 Data section）
-bash scripts/download_data.sh
+
 
 # 运行
 python main.py --config /path/to/config.toml
@@ -73,6 +72,7 @@ CAT/
 
 - kolektorsdd2数据集
   使用的是训练子集被筛选, 只剩下正常样本的数据集(自监督学习)
+  链接: https://pan.baidu.com/s/1kI2RksDsoqY1ZVvONkHnhA?pwd=anqf 提取码: anqf
 - 自定义数据集
   按照以下结构
 
