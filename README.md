@@ -16,7 +16,6 @@
 - [项目结构（Project Structure）](#项目结构project-structure)
 - [数据集（Dataset）](#数据集dataset)
 - [配置（Configuration）](#配置configuration)
-- [模型与结果（Models \& Results）](#模型与结果models--results)
 - [许可（License）](#许可license)
 
 ---
@@ -161,7 +160,7 @@ pretrain_image_size=[224,224]
 backbone="resnet50"
 ```
 
-# 模型与结果（Models & Results）
+<!-- # 模型与结果（Models & Results）
 <sub>**Table:** Comparison with Existing Methods on KolektorSDD2 Dataset</sub>
 
 | Method | Image-level AUROC | Pixel-level AUROC | Per-region Overlap | AP_det | AP_loc |
@@ -180,7 +179,7 @@ backbone="resnet50"
 
 
 
-- 表格展示不同实验对比（建议放在 `docs/` 或 `RESULTS.md`）
+- 表格展示不同实验对比（建议放在 `docs/` 或 `RESULTS.md`） -->
 
 # 许可（License）
 
